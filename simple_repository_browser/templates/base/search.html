@@ -15,7 +15,7 @@
          <img src="{{ static_file_url('/images/python-logo-only.svg') }}" style="padding: 0 1em 0 0.5em; vertical-align: top; width: 64px;" >
          <div style="display: inline-block; width: calc(100% - 70px);">
           {{ content.canonical_name }} &nbsp;&nbsp;&nbsp;{{ content.release_version or '' }}
-             <span style="float: right; text-decoration: none; font-size: smaller; color: gray;">{{ content.release_date.strftime('%b %d, %Y') if content.release_date else '' }}</span>
+             <span style="float: right; text-decoration: none; font-size: smaller; color: gray;">{{ content.release_date.strftime('%b %d, %Y') if (content.release_date and content.release_date.year > 1990) else '' }}</span>
           <p style="text-decoration: none; font-size: smaller; color: gray; margin: 0.1em 0 0 0;">{{ content.summary or '' }}</p>
          </div>
       </div>
