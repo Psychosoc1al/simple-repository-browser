@@ -127,6 +127,12 @@ class Controller:
                 status_code=400,
             )
 
+    @router.get("/packages", name="packages")
+    async def packages(self, request: fastapi.Request, page: int = 1) -> str:
+        """Render a paginated list of all indexed packages."""
+        response = await self._query_packages(query="", page=page)
+        return self.view.packages_page(response, request)
+
     @router.get("/search", name="search")
     async def search(
         self, request: fastapi.Request, query: str = "", page: int = 1
