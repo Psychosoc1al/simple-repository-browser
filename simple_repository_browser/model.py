@@ -6,10 +6,13 @@ import sqlite3
 import typing
 
 import diskcache
-from packaging.utils import canonicalize_name
+from packaging.utils import InvalidName, canonicalize_name
 from packaging.version import Version
 from simple_repository import SimpleRepository
-from simple_repository.errors import PackageNotFoundError
+from simple_repository.errors import (
+    PackageNotFoundError,
+    SourceRepositoryUnavailable,
+)
 from simple_repository.model import File, ProjectDetail
 
 from . import _search, compatibility_matrix, crawler, errors, fetch_projects
@@ -194,7 +197,7 @@ class Model:
                             0, SearchResultItem(canonical_name=name_proposal)
                         )
                         n_results += 1
-                    except PackageNotFoundError:
+                    except (PackageNotFoundError, SourceRepositoryUnavailable):
                         pass
 
         return QueryResultModel(
@@ -211,13 +214,19 @@ class Model:
         version: Version | InvalidVersion | None,
         recache: bool,
     ) -> ProjectPageModel:
-        canonical_name = canonicalize_name(project_name)
+        try:
+            canonical_name = canonicalize_name(project_name, validate=True)
+        except InvalidName:
+            raise errors.RequestError(
+                status_code=404, detail=f"Project {project_name} not found."
+            )
+
         try:
             prj = await self.source.get_project_page(canonical_name)
             fetch_projects.insert_if_missing(
                 self.projects_db, canonical_name, project_name
             )
-        except PackageNotFoundError:
+        except (PackageNotFoundError, SourceRepositoryUnavailable):
             # Tidy up the cache if the project is no longer found.
             for key in list(self.cache):
                 if key[:2] == ("pkg-info", canonical_name):
