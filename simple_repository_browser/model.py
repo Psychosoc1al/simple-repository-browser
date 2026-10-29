@@ -135,17 +135,32 @@ class Model:
     async def project_query(
         self, query: str, page_size: int, page: int
     ) -> QueryResultModel:
-        try:
-            search_term = _search.parse(query)
-        except _search.ParseError:
-            raise errors.InvalidSearchQuery("Invalid search pattern")
+        """Query indexed packages matching `query`, or all packages if `query` is empty.
 
-        if search_term is None:
-            raise errors.InvalidSearchQuery("Please specify a search query")
-        try:
-            sql_builder = _search.build_sql(search_term)
-        except ValueError as err:
-            raise errors.InvalidSearchQuery(f"Search query invalid ({str(err)})")
+        Args:
+            query: Search query string. If empty, all packages are returned.
+            page_size: Number of results per page.
+            page: 1-based page index.
+
+        Returns:
+            A `QueryResultModel` containing matching packages and pagination stats.
+        """
+        if not query:
+            sql_builder = _search.build_sql(None).with_order(
+                "ORDER BY canonical_name", ()
+            )
+        else:
+            try:
+                search_term = _search.parse(query)
+            except _search.ParseError:
+                raise errors.InvalidSearchQuery("Invalid search pattern")
+
+            if search_term is None:
+                raise errors.InvalidSearchQuery("Please specify a search query")
+            try:
+                sql_builder = _search.build_sql(search_term)
+            except ValueError as err:
+                raise errors.InvalidSearchQuery(f"Search query invalid ({str(err)})")
 
         offset = (page - 1) * page_size  # page is 1 based.
 
