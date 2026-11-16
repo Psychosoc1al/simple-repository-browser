@@ -106,15 +106,15 @@ class Controller:
         response = self.model.repository_stats()
         return self.view.about_page(response, request)
 
-    async def _query_packages(self, query: str, page: int) -> model.QueryResultModel:
-        """Query packages and handle invalid search errors.
+    async def _query_projects(self, query: str, page: int) -> model.QueryResultModel:
+        """Query projects and handle invalid search errors.
 
         Args:
-            query: Search query string (empty for all packages).
+            query: Search query string (empty for all projects).
             page: 1-based page index.
 
         Returns:
-            A `QueryResultModel` containing matching packages and pagination info.
+            A `QueryResultModel` containing matching projects and pagination info.
         """
         page_size = 50
         try:
@@ -127,18 +127,18 @@ class Controller:
                 status_code=400,
             )
 
-    @router.get("/packages", name="packages")
-    async def packages(self, request: fastapi.Request, page: int = 1) -> str:
-        """Render a paginated list of all indexed packages."""
-        response = await self._query_packages(query="", page=page)
-        return self.view.packages_page(response, request)
+    @router.get("/projects", name="projects")
+    async def projects(self, request: fastapi.Request, page: int = 1) -> str:
+        """Render a paginated list of all indexed projects."""
+        response = await self._query_projects(query="", page=page)
+        return self.view.projects_page(response, request)
 
     @router.get("/search", name="search")
     async def search(
         self, request: fastapi.Request, query: str = "", page: int = 1
     ) -> str:
         # Note: page is 1 based. We don't have a page 0.
-        response = await self._query_packages(query=query, page=page)
+        response = await self._query_projects(query=query, page=page)
         return self.view.search_page(response, request)
 
     @router.get("/project/{project_name}", name="project", response_model=None)

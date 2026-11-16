@@ -2,8 +2,8 @@
 
 {% block results_heading %}
 {% if results_count == 0 %}
-  No packages found.
+  No projects found.
 {% else %}
-  All packages ({{ results_count }} packages){% if n_pages > 1%}. Page {{ page }} of {{ n_pages }}:{% endif %}
+  All projects ({{ results_count }} projects){% if n_pages > 1%}. Page {{ page }} of {{ n_pages }}:{% endif %}
 {% endif %}
 {% endblock results_heading %}

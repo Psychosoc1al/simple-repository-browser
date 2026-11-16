@@ -89,11 +89,11 @@ class View:
     ) -> str:
         return self.render_template(context, request, "search.html")
 
-    def packages_page(
+    def projects_page(
         self, context: model.QueryResultModel, request: fastapi.Request
     ) -> str:
-        """Render the all-packages list page."""
-        return self.render_template(context, request, "packages.html")
+        """Render the all-projects list page."""
+        return self.render_template(context, request, "projects.html")
 
     def index_page(self, request: fastapi.Request) -> str:
         return self.render_template({}, request, "index.html")
