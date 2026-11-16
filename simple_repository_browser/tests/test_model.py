@@ -41,3 +41,32 @@ def test_SearchResultItem__from_db_row__converts_naive_to_utc():
         assert result.release_date.tzinfo is not None
 
         con.close()
+
+
+def test_SearchResultItem__from_db_row__none_release_date() -> None:
+    """Verify SearchResultItem.from_db_row() handles None release_date."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        con = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+        con.row_factory = sqlite3.Row
+        fetch_projects.create_table(con)
+
+        fetch_projects.insert_if_missing(con, "test-pkg", "Test-Pkg")
+        fetch_projects.update_summary(
+            con,
+            name="test-pkg",
+            summary="A test package",
+            release_date=None,
+            release_version="1.0.0",
+        )
+
+        cursor = con.execute(
+            "SELECT canonical_name, summary, release_version, release_date FROM projects WHERE canonical_name = ?",
+            ("test-pkg",),
+        )
+        row = cursor.fetchone()
+        result = model.SearchResultItem.from_db_row(row)
+
+        assert result.canonical_name == "test-pkg"
+        assert result.release_date is None
+        con.close()

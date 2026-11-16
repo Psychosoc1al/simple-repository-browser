@@ -48,7 +48,7 @@
     </a>
     {% endif %}
     {% set release_date = file_info.upload_time or this_release.release_date %}
-    {% if (release_date and release_date.year > 1990) %}
+    {% if release_date %}
     <br><br>
     <span data-source="release_date">
         Released:
@@ -189,7 +189,7 @@
                       <i class="far fa-folder-open"></i>
                     </span>
                     {{ release_info.version }}
-                    {% if release_info.release_date and release_info.release_date.year > 1990 %}
+                    {% if release_info.release_date %}
                         <span style="float: right; text-decoration: none; font-size: smaller; color: gray;">
                             {{ release_info.release_date.strftime('%b %d, %Y') }}
                         </span>

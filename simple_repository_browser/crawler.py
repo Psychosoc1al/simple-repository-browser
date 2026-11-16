@@ -260,8 +260,7 @@ class Crawler:
                 self._projects_db,
                 name=canonical,
                 summary=pkg_info.summary,
-                release_date=info_file.upload_time
-                or datetime.fromtimestamp(0, tz=timezone.utc),
+                release_date=info_file.upload_time,
                 release_version=str(version),
             )
             fetch_projects.update_metadata(

@@ -157,11 +157,16 @@ def remove_if_found(connection, canonical_name):
 
 
 def update_summary(
-    conn, name: str, summary: str, release_date: datetime.datetime, release_version: str
-):
+    conn,
+    name: str,
+    summary: str,
+    release_date: datetime.datetime | None,
+    release_version: str,
+) -> None:
+    """Update project summary, release version, and optional release date."""
     # Strip timezone info before storing in SQLite to avoid converter issues.
     # We always store naive datetimes which represent UTC.
-    if release_date.tzinfo is not None:
+    if release_date and release_date.tzinfo is not None:
         release_date = release_date.replace(tzinfo=None)
 
     with conn as cursor:
