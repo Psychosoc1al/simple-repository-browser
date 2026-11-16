@@ -2,12 +2,14 @@ from datetime import datetime
 from pathlib import Path
 import sqlite3
 import tempfile
+import typing
 
 import diskcache
 import parsley
 import pytest
+from simple_repository.errors import SourceRepositoryUnavailable
 
-from simple_repository_browser import _search, model
+from simple_repository_browser import _search, errors, model
 from simple_repository_browser._search import Filter, FilterOn
 
 
@@ -266,6 +268,13 @@ class MockSimpleRepository:
         raise PackageNotFoundError(f"Project {name} not found")
 
 
+class UnavailableRepository(MockSimpleRepository):
+    """Mock repository that always raises `SourceRepositoryUnavailable`."""
+
+    async def get_project_page(self, name: str) -> typing.NoReturn:
+        raise SourceRepositoryUnavailable("Server down")
+
+
 @pytest.fixture
 def test_database(tmp_path: Path):
     """Create a temporary SQLite database with test data for search ordering."""
@@ -338,6 +347,13 @@ def test_model(test_database):
     )
     yield test_model
     cache.close()
+
+
+@pytest.fixture
+def unavailable_test_model(test_model: model.Model) -> model.Model:
+    """Create a model instance with an unavailable source repository."""
+    test_model.source = UnavailableRepository()
+    return test_model
 
 
 def assert_order(expected_names, actual_results):
@@ -543,3 +559,34 @@ async def test_non_ascii_search_query(test_model: model.Model) -> None:
 
     assert result["results"] == []
     assert result["results_count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_search_source_unavailable_with_local_matches(
+    unavailable_test_model: model.Model,
+) -> None:
+    """Verify that search succeeds when upstream is down if matches exist locally."""
+    result = await unavailable_test_model.project_query(
+        "numpy",
+        page_size=10,
+        page=1,
+    )
+
+    assert result["results_count"] > 0
+    assert any(item.canonical_name == "numpy" for item in result["results"])
+
+
+@pytest.mark.asyncio
+async def test_search_source_unavailable_missing_package(
+    unavailable_test_model: model.Model,
+) -> None:
+    """Verify that search raises 502 RequestError when upstream lookup is needed and fails."""
+    with pytest.raises(errors.RequestError) as exc_info:
+        await unavailable_test_model.project_query(
+            "missing-package",
+            page_size=10,
+            page=1,
+        )
+
+    assert exc_info.value.status_code == 502
+    assert "unavailable" in exc_info.value.detail.lower()

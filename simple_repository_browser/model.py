@@ -212,8 +212,13 @@ class Model:
                             0, SearchResultItem(canonical_name=name_proposal)
                         )
                         n_results += 1
-                    except (PackageNotFoundError, SourceRepositoryUnavailable):
+                    except PackageNotFoundError:
                         pass
+                    except SourceRepositoryUnavailable:
+                        raise errors.RequestError(
+                            status_code=502,
+                            detail="Source repository is currently unavailable.",
+                        )
 
         return QueryResultModel(
             search_query=query,
@@ -241,7 +246,7 @@ class Model:
             fetch_projects.insert_if_missing(
                 self.projects_db, canonical_name, project_name
             )
-        except (PackageNotFoundError, SourceRepositoryUnavailable):
+        except PackageNotFoundError:
             # Tidy up the cache if the project is no longer found.
             for key in list(self.cache):
                 if key[:2] == ("pkg-info", canonical_name):
@@ -249,6 +254,11 @@ class Model:
             fetch_projects.remove_if_found(self.projects_db, canonical_name)
             raise errors.RequestError(
                 status_code=404, detail=f"Project {project_name} not found."
+            )
+        except SourceRepositoryUnavailable:
+            raise errors.RequestError(
+                status_code=502,
+                detail=f"Source repository is currently unavailable for {project_name}.",
             )
 
         if not prj.files:

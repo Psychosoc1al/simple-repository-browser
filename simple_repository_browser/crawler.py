@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 import logging
 import os
 import sqlite3
@@ -11,7 +11,7 @@ from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
 from packaging.version import Version
 from simple_repository import SimpleRepository, model
-from simple_repository.errors import PackageNotFoundError
+from simple_repository.errors import PackageNotFoundError, SourceRepositoryUnavailable
 
 from . import fetch_projects
 from .fetch_description import PackageInfo, package_info
@@ -202,6 +202,10 @@ class Crawler:
         while True:
             try:
                 await self.refetch_hook()
+            except SourceRepositoryUnavailable:
+                logging.warning(
+                    "Source repository is currently unavailable; skipping reindex"
+                )
             except Exception as err:
                 logging.exception(err, exc_info=True)
             await asyncio.sleep(self.frequency_seconds)
