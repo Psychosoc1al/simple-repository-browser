@@ -134,9 +134,7 @@ class Controller:
         return self.view.projects_page(response, request)
 
     @router.get("/search", name="search")
-    async def search(
-        self, request: fastapi.Request, query: str = "", page: int = 1
-    ) -> str:
+    async def search(self, request: fastapi.Request, query: str, page: int = 1) -> str:
         # Note: page is 1 based. We don't have a page 0.
         response = await self._query_projects(query=query, page=page)
         return self.view.search_page(response, request)

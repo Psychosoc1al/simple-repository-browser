@@ -526,3 +526,20 @@ async def test_injected_results_when_not_in_db(test_model):
         item for item in result["results"] if item.canonical_name == "numpy"
     ]
     assert "Fundamental" in numpy_result.summary
+
+
+def test_search_context_ignores_non_ascii_exact_name() -> None:
+    """Verify that non-ASCII names are ignored for exact match candidate injection."""
+    context = _search.SearchContext()
+    updated = context.with_exact_name("тест")
+
+    assert updated.exact_names == ()
+
+
+@pytest.mark.asyncio
+async def test_non_ascii_search_query(test_model: model.Model) -> None:
+    """Verify that search queries with non-ASCII characters run without error."""
+    result = await test_model.project_query("тест", page_size=10, page=1)
+
+    assert result["results"] == []
+    assert result["results_count"] == 0
